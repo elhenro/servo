@@ -2,38 +2,26 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
+
+	"github.com/gorilla/mux"
 )
 
+func dom1Handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hey dude!")
+}
+
+func dom2Handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "We welcome you, sire!")
+}
+
 func main() {
-	http.HandleFunc("/", test)
-	//http.HandleFunc("http://192.168.2.135:8050", test)
+	r := mux.NewRouter()
+	d1 := r.Host("adomain.com").Subrouter()
+	d2 := r.Host("seconddomain.com").Subrouter()
 
-	log.Fatal(http.ListenAndServe(":8050", nil))
-}
+	d1.HandleFunc("/", dom1Handler)
+	d2.HandleFunc("/", dom2Handler)
 
-func home(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "home")
-}
-func test(w http.ResponseWriter, r *http.Request) {
-	//fmt.Fprintf(w, "test")
-	remote, err := url.Parse("http://localhost:8047")
-	if err != nil {
-		panic(err)
-	}
-	proxy := httputil.NewSingleHostReverseProxy(remote)
-	http.Handle("/test/test", &ProxyHandler{proxy})
-}
-
-type ProxyHandler struct {
-	p *httputil.ReverseProxy
-}
-
-func (ph *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	w.Header().Set("X-Ben", "Rad")
-	ph.p.ServeHTTP(w, r)
+	http.ListenAndServe(":8080", nil)
 }
